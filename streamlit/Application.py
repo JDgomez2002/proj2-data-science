@@ -5,7 +5,7 @@ import plotly.express as px
 
 ## ---- Data ---- ##
 
-data = pd.read_csv('../result/data_cleaned.csv')
+data = pd.read_csv('result/data_cleaned.csv')
 
 st.title('Data Analysis')
 

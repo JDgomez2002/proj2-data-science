@@ -8,6 +8,7 @@ from sklearn.metrics import confusion_matrix, roc_curve, auc
 import seaborn as sns
 import matplotlib.pyplot as plt
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import Trainer, TrainingArguments
 import torch
 from pathlib import Path
 
@@ -25,20 +26,17 @@ models = {
 
 # Initialize tokenizer
 @st.cache_resource
-def load_tokenizer():
-    return AutoTokenizer.from_pretrained("roberta-base")
-
-
-tokenizer = load_tokenizer()
+def load_tokenizer(model_name):
+    return AutoTokenizer.from_pretrained(f"trainedModels/{model_name}")
 
 
 # Load the trained models and predictions
 @st.cache_resource
 def load_model_and_predictions(model_name):
     try:
-        with open(f'../../trainedModels/{model_name}.pkl', 'rb') as f:
-            trainer = pickle.load(f)
-        with open(f'../../trainedModels/{model_name}Predictions.pkl', 'rb') as f:
+        model = AutoModelForSequenceClassification.from_pretrained(f'trainedModels/{model_name}')
+        trainer = Trainer(model=model)
+        with open(f'trainedModels/{model_name}Pred.pkl', 'rb') as f:
             predictions = pickle.load(f)
         return trainer, predictions
     except Exception as e:
@@ -110,7 +108,6 @@ if selected_models:
                                        labels=dict(x="Predicted", y="True", color="Count"),
                                        x=labels,
                                        y=labels,
-                                       text=cm,
                                        aspect="auto",
                                        color_continuous_scale="Blues",
                                        title=model_name)
@@ -161,11 +158,18 @@ if selected_models:
             cols = st.columns(len(selected_models))
 
             for idx, (col, model_name) in enumerate(zip(cols, selected_models)):
-                trainer, _ = load_model_and_predictions(models[model_name])
+                trainer, predictions = load_model_and_predictions(models[model_name])
+                tokenizer = load_tokenizer(models[model_name])
 
                 if trainer:
                     with col:
                         st.subheader(model_name)
+
+                        # Check if MPS is available
+                        device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
+
+                        # Move model to the appropriate device
+                        trainer.model.to(device)
 
                         # Tokenize input text
                         inputs = tokenizer(input_text,
@@ -173,6 +177,8 @@ if selected_models:
                                            truncation=True,
                                            max_length=128,
                                            return_tensors="pt")
+                        
+                        inputs = {key: value.to(device) for key, value in inputs.items()}
 
                         # Get prediction
                         with torch.no_grad():
@@ -181,7 +187,7 @@ if selected_models:
                             predicted_class = torch.argmax(predictions).item()
 
                         # Display results
-                        probabilities = predictions[0].numpy()
+                        probabilities = predictions[0].cpu().numpy()
 
                         st.write("**Predicted Class:**")
                         st.write(f"**{labels[predicted_class]}**")
