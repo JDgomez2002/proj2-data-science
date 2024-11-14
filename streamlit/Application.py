@@ -5,7 +5,9 @@ import plotly.express as px
 
 ## ---- Data ---- ##
 
-data = pd.read_csv('result/data_cleaned.csv')
+path = "/Users/jdgomez/UVG/data-science/proj2-data-science"
+
+data = pd.read_csv(f'{path}/result/data_cleaned.csv')
 
 st.title('Data Analysis')
 
