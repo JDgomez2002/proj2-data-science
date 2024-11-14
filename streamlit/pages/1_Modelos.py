@@ -12,6 +12,8 @@ from transformers import Trainer, TrainingArguments
 import torch
 from pathlib import Path
 
+path = "/Users/jdgomez/UVG/data-science/proj2-data-science"
+
 # Set page title
 st.set_page_config(page_title="Discourse Effectiveness Classifier", layout="wide")
 st.title('Discourse Effectiveness Classifier')
@@ -27,16 +29,16 @@ models = {
 # Initialize tokenizer
 @st.cache_resource
 def load_tokenizer(model_name):
-    return AutoTokenizer.from_pretrained(f"trainedModels/{model_name}")
+    return AutoTokenizer.from_pretrained(f"{path}/trainedModels/{model_name}")
 
 
 # Load the trained models and predictions
 @st.cache_resource
 def load_model_and_predictions(model_name):
     try:
-        model = AutoModelForSequenceClassification.from_pretrained(f'trainedModels/{model_name}')
+        model = AutoModelForSequenceClassification.from_pretrained(f'{path}/trainedModels/{model_name}')
         trainer = Trainer(model=model)
-        with open(f'trainedModels/{model_name}Pred.pkl', 'rb') as f:
+        with open(f'{path}/trainedModels/{model_name}-predictions.pkl', 'rb') as f:
             predictions = pickle.load(f)
         return trainer, predictions
     except Exception as e:
