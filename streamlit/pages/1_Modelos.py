@@ -20,7 +20,8 @@ models = {
     'RoBERTa Base': 'roberta-base',
     'deBERTa Base': 'deberta-base',
     'Xlnet Base': 'xlnet-base-cased',
-    'Electra Base': 'electra-base'
+    'Electra Base': 'electra-base',
+    'Bert Base': 'bert-base'
 }
 
 
