@@ -7,7 +7,7 @@ import plotly.express as px
 
 path = "/Users/jdgomez/UVG/data-science/proj2-data-science"
 
-data = pd.read_csv(f'{path}/result/data_cleaned.csv')
+data = pd.read_csv(f'result/data_cleaned.csv')
 
 st.title('Data Analysis')
 
@@ -47,14 +47,11 @@ selected_filter = []
 if categorical_variable == 'discourse_effectiveness':
     options = labels
     selected_values = st.sidebar.multiselect(categorical_variable, options=options, default=options)
-    selected_filter = [label_mapping_effectiveness[label] for label in selected_values]
-    print("selected_values", selected_values)
-    print("variable_filter", selected_filter)
+    selected_filter = selected_values
 else:
     options = discourseTypes
     selected_values = st.sidebar.multiselect(categorical_variable, options=options, default=options)
-    selected_filter = [label_mapping_types[label] for label in selected_values]
-    
+    selected_filter = selected_values
 
 # Numerical variable
 
@@ -74,7 +71,6 @@ data_filtered = data_filtered.query(f"{categorical_variable} in @selected_filter
 
 # Filter the data based on the selected values of numerical
 data_filtered = data_filtered[data_filtered[numerical_variable].between(values_slider[0], values_slider[1])]
-
 
 ## ---- Plots ---- ##
 

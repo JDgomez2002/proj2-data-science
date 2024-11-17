@@ -10,9 +10,6 @@ import matplotlib.pyplot as plt
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from transformers import Trainer, TrainingArguments
 import torch
-from pathlib import Path
-
-path = "/Users/jdgomez/UVG/data-science/proj2-data-science"
 
 # Set page title
 st.set_page_config(page_title="Discourse Effectiveness Classifier", layout="wide")
@@ -20,28 +17,31 @@ st.title('Discourse Effectiveness Classifier')
 
 # Model definitions
 models = {
-    'RoBERTa Base': 'roberta-base2',
-    # 'RoBERTa Large': 'roberta-large',
-    # 'BERT Base': 'bert-base'
+    'RoBERTa Base': 'roberta-base',
+    'deBERTa Base': 'deberta-base',
+    'Xlnet Base': 'xlnet-base-cased',
+    'Electra Base': 'electra-base'
 }
 
 
 # Initialize tokenizer
 @st.cache_resource
 def load_tokenizer(model_name):
-    return AutoTokenizer.from_pretrained(f"{path}/trainedModels/{model_name}")
+    return AutoTokenizer.from_pretrained(f"trainedModels/{model_name}")
 
 
 # Load the trained models and predictions
 @st.cache_resource
 def load_model_and_predictions(model_name):
     try:
-        model = AutoModelForSequenceClassification.from_pretrained(f'{path}/trainedModels/{model_name}')
+        model = AutoModelForSequenceClassification.from_pretrained(f'trainedModels/{model_name}')
         trainer = Trainer(model=model)
-        with open(f'{path}/trainedModels/{model_name}-predictions.pkl', 'rb') as f:
+        url = f'trainedModels/{model_name}/{model_name}-predictions.pkl'
+        with open(url, 'rb') as f:
             predictions = pickle.load(f)
         return trainer, predictions
     except Exception as e:
+        print("Error loading model and predictions:", model_name, e)
         return None, None
 
 
@@ -52,7 +52,7 @@ st.sidebar.title('Model Selection')
 selected_models = st.sidebar.multiselect(
     "Select models to compare",
     options=list(models.keys()),
-    default=[list(models.keys())[0]]
+    default=list(models.keys())
 )
 
 # Input for text classification
@@ -82,10 +82,10 @@ if selected_models:
                 metrics = predictions[2]
                 metrics_data.append({
                     'Model': model_name,
-                    'Accuracy': f"{metrics['test_accuracy']:.3f}",
-                    'Precision': f"{metrics['test_precision']:.3f}",
-                    'Recall': f"{metrics['test_recall']:.3f}",
-                    'F1 Score': f"{metrics['test_f1']:.3f}"
+                    'Accuracy': f"{metrics['test_accuracy'] * 100:.2f}%",
+                    'Precision': f"{metrics['test_precision'] * 100:.2f}%",
+                    'Recall': f"{metrics['test_recall'] * 100:.2f}%",
+                    'F1 Score': f"{metrics['test_f1'] * 100:.2f}%"
                 })
 
         if metrics_data:
@@ -95,25 +95,24 @@ if selected_models:
     with tab2:
         # Confusion Matrices
         st.header("Confusion Matrices")
-        cols = st.columns(len(selected_models))
+        col1, col2 = st.columns(2)
 
-        for idx, (col, model_name) in enumerate(zip(cols, selected_models)):
+        for idx, model_name in enumerate(selected_models):
             trainer, predictions = load_model_and_predictions(models[model_name])
             if trainer and predictions:
-                with col:
-                    st.subheader(model_name)
-                    true_labels = predictions[1]
-                    pred_labels = np.argmax(predictions[0], axis=1)
-                    cm = confusion_matrix(true_labels, pred_labels)
+                true_labels = predictions[1]
+                pred_labels = np.argmax(predictions[0], axis=1)
+                cm = confusion_matrix(true_labels, pred_labels)
 
+                with col1 if idx % 2 == 0 else col2:
+                    st.subheader(model_name)
                     fig_cm = px.imshow(cm,
-                                       labels=dict(x="Predicted", y="True", color="Count"),
-                                       x=labels,
-                                       y=labels,
-                                       aspect="auto",
-                                       color_continuous_scale="Blues",
-                                       title=model_name)
-                    st.plotly_chart(fig_cm, use_container_width=True)
+                                        labels=dict(x="Predicted", y="True", color="Count"),
+                                        x=labels,
+                                        y=labels,
+                                        color_continuous_scale="Blues",
+                                        text_auto=True,)
+                    st.plotly_chart(fig_cm, use_container_width=True, key=idx)
 
         # ROC Curves
         st.header("ROC Curves")
@@ -197,5 +196,8 @@ if selected_models:
                         st.write("**Class Probabilities:**")
                         for class_name, prob in zip(labels, probabilities):
                             st.write(f"{class_name}: {prob * 100:.2f}%")
+        
+        else:
+            st.warning("Please enter a text to classify.")
 else:
     st.warning("Please select at least one model to compare.")
