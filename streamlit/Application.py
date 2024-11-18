@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
+from collections import Counter
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
 
 ## ---- Data ---- ##
 
@@ -86,3 +89,31 @@ data_filtered = data_filtered.groupby(categorical_variable).mean().reset_index()
 # Create the bar chart
 fig_2 = px.bar(data_filtered, x=categorical_variable, y=numerical_variable, title='Bars', labels={numerical_variable: f'{numerical_variable} Promedio'})
 st.plotly_chart(fig_2)
+
+# Scatter plot
+fig_3 = px.scatter(data_filtered, x=numerical_variable, y=categorical_variable, title="Scatter Plot", color=categorical_variable)
+st.plotly_chart(fig_3)
+
+## ---- Word Analysis ---- ##
+
+# Analyzing the text column (assuming 'text' is the column name)
+if 'discourse_text' in data.columns:
+    all_words = ' '.join(data['discourse_text'].dropna()).split()
+    word_counts = Counter(all_words)
+    most_common_words = word_counts.most_common(10)
+    st.subheader("Top 10 Most Common Words")
+    
+    # Crear el gráfico de barras para las 10 palabras más comunes
+    common_words_df = pd.DataFrame(most_common_words, columns=["Word", "Count"])
+    fig_4 = px.bar(common_words_df, x='Word', y='Count', title='Top 10 Most Common Words')
+    st.plotly_chart(fig_4)
+
+    # Word Cloud
+    st.subheader("Word Cloud")
+    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(' '.join(all_words))
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.axis('off')
+    st.pyplot(plt)
+else:
+    st.warning("No 'discourse_text' column found in the dataset to analyze words.")
