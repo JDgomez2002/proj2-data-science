@@ -241,7 +241,7 @@ if selected_models:
 
                 if trainer:
                     with col:
-                        st.subheader(model_name)
+                        st.header(model_name)
 
                         # Check if MPS is available
                         device = torch.device("mps") if torch.backends.mps.is_available() else torch.device("cpu")
@@ -267,10 +267,12 @@ if selected_models:
                         # Display results
                         probabilities = predictions[0].cpu().numpy()
 
-                        st.write("**Predicted Class:**")
+                        st.subheader("**Predicted Class:**")
                         st.write(f"**{labels[predicted_class]}**")
 
-                        st.write("**Class Probabilities:**")
+                        st.write("")
+
+                        st.subheader("**Class Probabilities:**")
                         for class_name, prob in zip(labels, probabilities):
                             st.write(f"{class_name}: {prob * 100:.2f}%")
         
