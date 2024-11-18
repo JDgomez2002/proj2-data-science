@@ -11,7 +11,7 @@ import matplotlib.colors
 
 path = "/Users/jdgomez/UVG/data-science/proj2-data-science"
 
-data = pd.read_csv(f'../result/data_cleaned.csv')
+data = pd.read_csv(f'result/data_cleaned.csv')
 
 st.title('Data Analysis')
 

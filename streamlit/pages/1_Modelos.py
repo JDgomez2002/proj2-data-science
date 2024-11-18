@@ -19,7 +19,7 @@ st.title('Discourse Effectiveness Classifier')
 models = {
     'RoBERTa Base': 'roberta-base',
     'deBERTa Base': 'deberta-base',
-    'Xlnet Base': 'xlnet-base-cased',
+    'Xlnet Base': 'xlnet-base',
     'Electra Base': 'electra-base',
     'Bert Base': 'bert-base'
 }
