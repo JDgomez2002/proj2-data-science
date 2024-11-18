@@ -94,6 +94,17 @@ st.plotly_chart(fig_2)
 fig_3 = px.scatter(data_filtered, x=numerical_variable, y=categorical_variable, title="Scatter Plot", color=categorical_variable)
 st.plotly_chart(fig_3)
 
+fig_4 = px.scatter(data, x='text_length', y='word_count', 
+                 color='discourse_effectiveness', 
+                 symbol='discourse_type',  # Agregar símbolos para discourse_type
+                 title='Relación entre Text Length y Word Count por Discourse Effectiveness y Discourse Type',
+                 labels={'text_length': 'Text Length', 'word_count': 'Word Count'},
+                 hover_data=['discourse_type'])  # Mostrar información adicional al pasar el cursor
+
+fig_4.update_layout(legend_title_text='Discourse Effectiveness y Discourse Type')
+
+st.plotly_chart(fig_4)
+
 ## ---- Word Analysis ---- ##
 
 # Analyzing the text column (assuming 'text' is the column name)
