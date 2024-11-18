@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 path = "/Users/jdgomez/UVG/data-science/proj2-data-science"
 
-data = pd.read_csv(f'result/data_cleaned.csv')
+data = pd.read_csv(f'../result/data_cleaned.csv')
 
 st.title('Data Analysis')
 
@@ -128,3 +128,130 @@ if 'discourse_text' in data.columns:
     st.pyplot(plt)
 else:
     st.warning("No 'discourse_text' column found in the dataset to analyze words.")
+
+## ---- Exploratory analysis graphs ---- ##
+
+# correlation matrix for the variables correlation
+
+# Correlation matrix
+st.subheader("Variables correlation matrix")
+
+numeric_cols = ['text_length', 'word_count']
+categorical_cols = ['discourse_type', 'discourse_effectiveness']
+
+# Create dummy variables for categorical columns
+df_encoded = pd.get_dummies(data[categorical_cols + numeric_cols], columns=categorical_cols)
+
+# Calculate correlation matrix
+corr_matrix = df_encoded.corr()
+
+# Create heatmap using custom color palette
+fig_corr = px.imshow(
+    corr_matrix,
+    color_continuous_scale=['#000000', '#FFFFFF', '#E5E5E5', '#CDECAC', '#2D9494', '#CC5A49'],
+    labels=dict(color="Correlation"),
+    title=" "
+)
+
+# Update layout for better readability
+fig_corr.update_traces(text=corr_matrix.round(2), texttemplate='%{text}')
+fig_corr.update_layout(
+    width=1000,
+    height=600,
+    title_x=0.5,
+    title_y=0.95
+)
+
+# Add the plot to Streamlit
+st.plotly_chart(fig_corr)
+
+# top 10 frequent words per discourse type (7 discourse types in total)
+
+## ---- Word frequency analysis by discourse type ---- ##
+
+st.subheader("Most common words per Discourse Type")
+
+# Color palette from the image
+colors = ['#000000', '#FFFFFF', '#E5E5E5', '#CDECAC', '#2D9494', '#CC5A49']
+
+# Create word frequency charts for each discourse type
+for i, dtype in enumerate(discourseTypes):
+    # Filter data for current discourse type
+    mask = data['discourse_type'] == dtype
+    text = ' '.join(data[mask]['discourse_text'].dropna())
+
+    # Count word frequencies
+    words = text.split()
+    word_freq = Counter(words)
+    top_words = dict(sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:10])
+
+    # Create DataFrame
+    df_words = pd.DataFrame({
+        'Word': list(top_words.keys()),
+        'Frequency': list(top_words.values())
+    })
+
+    # Create bar chart
+    fig = px.bar(
+        df_words,
+        x='Word',
+        y='Frequency',
+        title=f'Top 10 words for {dtype}',
+        color_discrete_sequence=[colors[4]]  # Using teal color from palette
+    )
+
+    # Update layout
+    fig.update_layout(
+        plot_bgcolor='rgba(0,0,0,0.05)',
+        xaxis_title='Word',
+        yaxis_title='Frequency',
+        showlegend=False,
+        width=800,
+        height=400
+    )
+
+    # Add gridlines
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='rgba(0,0,0,0.1)')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(0,0,0,0.1)')
+
+    # Display chart
+    st.plotly_chart(fig)
+
+# effectiveness types frequency per discourse type (3 types of effectiveness and 7 types of discourse type)
+
+## ---- Effectiveness frequency analysis by discourse type ---- ##
+
+st.subheader("Most common effectiveness per Discourse Type")
+
+# Create effectiveness frequency charts for each discourse type
+for i, dtype in enumerate(discourseTypes):
+    # Filter data for current discourse type
+    mask = data['discourse_type'] == dtype
+    effectiveness_counts = data[mask]['discourse_effectiveness'].value_counts().reset_index()
+    effectiveness_counts.columns = ['Effectiveness', 'Frequency']
+
+    # Create bar chart
+    fig = px.bar(
+        effectiveness_counts,
+        x='Effectiveness',
+        y='Frequency',
+        title=f'Effectiveness for {dtype}',
+        color_discrete_sequence=['#CDECAC']  # Using light green color from palette
+    )
+
+    # Update layout
+    fig.update_layout(
+        plot_bgcolor='rgba(0,0,0,0.05)',
+        xaxis_title='Effectiveness',
+        yaxis_title='Frequency',
+        showlegend=False,
+        width=800,
+        height=400
+    )
+
+    # Add gridlines
+    fig.update_xaxes(showgrid=True, gridwidth=1, gridcolor='rgba(0,0,0,0.1)')
+    fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(0,0,0,0.1)')
+
+    # Display chart
+    st.plotly_chart(fig)
