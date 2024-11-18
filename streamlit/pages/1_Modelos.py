@@ -24,6 +24,20 @@ models = {
     'Bert Base': 'bert-base'
 }
 
+custom_color_scale = [
+    [0.0, "#000000"],  # Black
+    [0.2, "#E5E5E5"],  # Light gray
+    [0.4, "#FFFFFF"],  # White
+    [0.6, "#CDECAC"],  # Light green
+    [0.8, "#2D9494"],  # Teal
+    [1.0, "#CC5A49"]   # Reddish orange
+]
+
+color_map = {
+    'Training': '#E5E5E5',    
+    'Validation': '#CC5A49'   # Turquoise
+}
+
 
 # Initialize tokenizer
 @st.cache_resource
@@ -45,6 +59,31 @@ def load_model_and_predictions(model_name):
         print("Error loading model and predictions:", model_name, e)
         return None, None
 
+
+def load_model_history(model_name):
+    try:
+        url = f'trainedModels/{model_name}/{model_name}.pkl'
+        with open(url, 'rb') as f:
+            history = pickle.load(f)
+
+        train_losses = []
+        eval_losses = []
+        epochs_loss = []
+        epochs = []
+
+        for log in history:
+            if 'loss' in log and 'epoch' in log:
+                train_losses.append(log['loss'])
+                epochs_loss.append(log['epoch'])
+            if 'eval_loss' in log:
+                eval_losses.append(log['eval_loss'])
+            if 'eval_accuracy' in log:
+                epochs.append(log['epoch'])
+        
+        return train_losses, eval_losses, epochs_loss, epochs
+    except Exception as e:
+        print("Error loading model, predictions, and history:", model_name, e)
+        return None, None, None
 
 # Sidebar
 st.sidebar.title('Model Selection')
@@ -108,11 +147,11 @@ if selected_models:
                 with col1 if idx % 2 == 0 else col2:
                     st.subheader(model_name)
                     fig_cm = px.imshow(cm,
-                                        labels=dict(x="Predicted", y="True", color="Count"),
-                                        x=labels,
-                                        y=labels,
-                                        color_continuous_scale="Blues",
-                                        text_auto=True,)
+                        labels=dict(x="Predicted", y="True", color="Count"),
+                        x=labels,
+                        y=labels,
+                        color_continuous_scale=custom_color_scale,
+                        text_auto=True,)
                     st.plotly_chart(fig_cm, use_container_width=True, key=idx)
 
         # ROC Curves
@@ -151,6 +190,43 @@ if selected_models:
             height=600
         )
         st.plotly_chart(fig_roc)
+
+
+        # Training and Validation Loss
+        st.header("Training and Validation Loss")
+        col3, col4 = st.columns(2)
+        fig_history = go.Figure()
+
+        for idx, model_name in enumerate(selected_models):
+            train_losses, eval_losses, epochs_loss, epochs = load_model_history(models[model_name])
+            if train_losses and eval_losses and epochs_loss:
+                # Crear DataFrame con los datos
+                df = pd.DataFrame({
+                    'Epoch': epochs_loss + epochs,  # Combinar epochs para ambas series
+                    'Loss': train_losses + eval_losses,  # Combinar valores de loss
+                    'Type': ['Training']*len(epochs_loss) + ['Validation']*len(epochs)  # Identificar tipo
+                })
+
+                # Crear gráfica con Plotly Express
+                fig_history = px.line(df, 
+                            x='Epoch', 
+                            y='Loss',
+                            color='Type',
+                            markers=True,
+                            title=f'{model_name}',
+                            color_discrete_map=color_map)
+
+                # Personalizar la gráfica
+                fig_history.update_layout(
+                    xaxis_title="Epoch",
+                    yaxis_title="Loss",
+                    legend_title=None,
+                    xaxis=dict(tickmode='linear', tick0=1, dtick=1)
+                )
+
+                # Mostrar en Streamlit
+                with col3 if idx % 2 == 0 else col4:
+                    st.plotly_chart(fig_history, use_container_width=True)
 
     with tab3:
         if input_text:
