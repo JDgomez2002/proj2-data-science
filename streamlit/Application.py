@@ -122,7 +122,7 @@ if categorical_variable == 'discourse_effectiveness':
     color_sequence = ['#2D9494', '#CDECAC', '#CC5A49']  # Teal, Light green, Salmon
 else:
     barTitle = 'Mean text length per discourse type'
-    color_sequence = ['#000000', '#A3B18A', '#CDECAC', '#2D9494', '#CC5A49', '#344E41']  # Full palette
+    color_sequence = [ '#A3B18A', '#CDECAC', '#2D9494', '#CC5A49', '#344E41']  # Full palette
 
 fig_2 = px.bar(
     data_filtered,
