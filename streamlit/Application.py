@@ -5,6 +5,7 @@ import plotly.express as px
 from collections import Counter
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
+import matplotlib.colors
 
 ## ---- Data ---- ##
 
@@ -80,24 +81,86 @@ data_filtered = data_filtered[data_filtered[numerical_variable].between(values_s
 category_counts = data_filtered[categorical_variable].value_counts()
 
 # Create the pie chart
-fig_1 = px.pie(values=category_counts, names=selected_values, title='Pie Chart', color=category_counts.index, color_discrete_map={'Effective': 'green', 'Adequate': 'blue', 'Ineffective': 'red'})
+pieTitle = ''
+if categorical_variable == 'discourse_effectiveness':
+    pieTitle = 'Discourse Effectiveness distribution'
+    color_map = {
+        'Effective': '#2D9494',  # Teal
+        'Adequate': '#CDECAC',   # Light green
+        'Ineffective': '#CC5A49' # Salmon
+    }
+else:
+    pieTitle = 'Discourse type distribution'
+    color_map = {
+        'Claim': '#000000',           # Black
+        'Concluding Statement': '#588157',    # White
+        'Counterclaim': '#E5E5E5',    # Light gray
+        'Evidence': '#CDECAC',        # Light green
+        'Lead': '#2D9494',           # Teal
+        'Position': '#CC5A49',        # Salmon
+        'Rebuttal': '#344E41'         # White
+    }
+
+fig_1 = px.pie(
+    values=category_counts,
+    names=selected_values,
+    title=pieTitle,
+    color=category_counts.index,
+    color_discrete_map=color_map
+)
+
 st.plotly_chart(fig_1)
 
-
+# data_filtered2 = data_filtered.groupby(categorical_variable)
 data_filtered = data_filtered.groupby(categorical_variable).mean().reset_index()
 
 # Create the bar chart
-fig_2 = px.bar(data_filtered, x=categorical_variable, y=numerical_variable, title='Bars', labels={numerical_variable: f'{numerical_variable} Promedio'})
+
+barTitle = ''
+if categorical_variable == 'discourse_effectiveness':
+    barTitle = 'Mean text length per discourse effectiveness'
+    color_sequence = ['#2D9494', '#CDECAC', '#CC5A49']  # Teal, Light green, Salmon
+else:
+    barTitle = 'Mean text length per discourse type'
+    color_sequence = ['#000000', '#A3B18A', '#CDECAC', '#2D9494', '#CC5A49', '#344E41']  # Full palette
+
+fig_2 = px.bar(
+    data_filtered,
+    x=categorical_variable,
+    y=numerical_variable,
+    title=barTitle,
+    labels={numerical_variable: f'Mean {numerical_variable}'},
+    color=categorical_variable,
+    color_discrete_sequence=color_sequence
+)
+
+# Update layout for better visibility
+fig_2.update_layout(
+    plot_bgcolor='rgba(0,0,0,0.05)',
+    showlegend=False
+)
+
+# Add gridlines
+fig_2.update_xaxes(showgrid=True, gridwidth=1, gridcolor='rgba(0,0,0,0.1)')
+fig_2.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(0,0,0,0.1)')
+
 st.plotly_chart(fig_2)
 
 # Scatter plot
-fig_3 = px.scatter(data_filtered, x=numerical_variable, y=categorical_variable, title="Scatter Plot", color=categorical_variable)
+
+scatTitle = ''
+if categorical_variable == 'discourse_effectiveness':
+    scatTitle = 'Text length count per discourse effectiveness'
+else:
+    scatTitle = 'Text length count per discourse type'
+
+fig_3 = px.scatter(data_filtered, x=numerical_variable, y=categorical_variable, title=scatTitle, color=categorical_variable)
 st.plotly_chart(fig_3)
 
-fig_4 = px.scatter(data, x='text_length', y='word_count', 
+fig_4 = px.scatter(data, x='text_length', y='word_count',
                  color='discourse_effectiveness', 
                  symbol='discourse_type',  # Agregar símbolos para discourse_type
-                 title='Relación entre Text Length y Word Count por Discourse Effectiveness y Discourse Type',
+                 title='Text length & word count relation by discourse effectiveness & discourse type',
                  labels={'text_length': 'Text Length', 'word_count': 'Word Count'},
                  hover_data=['discourse_type'])  # Mostrar información adicional al pasar el cursor
 
@@ -113,15 +176,34 @@ if 'discourse_text' in data.columns:
     word_counts = Counter(all_words)
     most_common_words = word_counts.most_common(10)
     st.subheader("Top 10 Most Common Words")
-    
+    color_sequence = ['#CDECAC', '#2D9494', '#CC5A49', '#344E41']  # Full palette
+
     # Crear el gráfico de barras para las 10 palabras más comunes
     common_words_df = pd.DataFrame(most_common_words, columns=["Word", "Count"])
-    fig_4 = px.bar(common_words_df, x='Word', y='Count', title='Top 10 Most Common Words')
+    fig_4 = px.bar(common_words_df, x='Word', y='Count', title='Top 10 Most Common Words', color_discrete_sequence=color_sequence)
     st.plotly_chart(fig_4)
 
-    # Word Cloud
+    # Word Cloud with custom colormap
     st.subheader("Word Cloud")
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(' '.join(all_words))
+    color_map = {
+        0: "#000000",  # Black
+        0.2: "#A3B18A",  # White
+        0.4: "#588157",  # Light gray
+        0.6: "#3A5A40",  # Light green
+        0.8: "#2D9494",  # Teal
+        1.0: "#CC5A49"  # Salmon
+    }
+
+    wordcloud = WordCloud(
+        width=800,
+        height=400,
+        background_color='white',
+        colormap=matplotlib.colors.LinearSegmentedColormap.from_list(
+            "custom",
+            list(color_map.values())
+        )
+    ).generate(' '.join(all_words))
+
     plt.figure(figsize=(10, 5))
     plt.imshow(wordcloud, interpolation='bilinear')
     plt.axis('off')
