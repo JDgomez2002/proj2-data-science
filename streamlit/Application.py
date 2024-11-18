@@ -146,16 +146,6 @@ fig_2.update_yaxes(showgrid=True, gridwidth=1, gridcolor='rgba(0,0,0,0.1)')
 
 st.plotly_chart(fig_2)
 
-# Scatter plot
-
-scatTitle = ''
-if categorical_variable == 'discourse_effectiveness':
-    scatTitle = 'Text length count per discourse effectiveness'
-else:
-    scatTitle = 'Text length count per discourse type'
-
-fig_3 = px.scatter(data_filtered, x=numerical_variable, y=categorical_variable, title=scatTitle, color=categorical_variable)
-st.plotly_chart(fig_3)
 
 fig_4 = px.scatter(data, x='text_length', y='word_count',
                  color='discourse_effectiveness', 
